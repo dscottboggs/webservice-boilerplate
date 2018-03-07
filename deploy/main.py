@@ -61,7 +61,7 @@ testnetwork = dc.networks.create(
     ipam=get_subnet()
 )
 
-web_service_root = getdir(project_root, "files", "web-service")
+web_service_root = getdir(project_root, "files", "DockerVolumes")
 # ^^ filepath of a working directory
 nginx_proxy_container = dc.containers.create(
 # see help(dc.containers.run), create()'s documentation refers to it
@@ -77,7 +77,7 @@ nginx_proxy_container = dc.containers.create(
         Mount(
             type='bind',
             target="/etc/nginx",
-            source=getdir(project_root, "files", "nginx-proxy-config")
+            source=getdir(web_service_root, "nginx-proxy", "conf")
         )
     ],
     network=testnetwork.name,
@@ -101,13 +101,13 @@ web_service = dc.containers.create(
         Mount(
             type='bind',
             target='/usr/share/nginx/html',
-            source=getdir(test_webserver_root, "webroot"),
+            source=getdir(web_service_root, "service", "webroot"),
             read_only=True,
         ),
         Mount(
             type='bind',
             target='/etc/nginx',
-            source=getdir(test_webserver_root, "config"),
+            source=getdir(test_webserver_root, "service", "conf"),
             read_only=True,
         )
     ],
