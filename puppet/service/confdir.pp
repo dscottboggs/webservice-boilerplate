@@ -1,12 +1,13 @@
 # puppet file for config dir
 $home_dir = '/home/scott'
 $service_name = 'test-webserver'
-$puppet_folder = "${home_dir}/Documents/basic_nginx_deployment/puppet"
-$docker_folder = "${home_dir}/Documents/basic_nginx_deployment/files"
-$base_dir = "${docker_folder}/${service_name}"
+$base_dir = "${home_dir}/Documents/boilerplates/webservice"
+$puppet_folder = "${base_dir}/puppet"
+$docker_folder = "${base_dir}/files"
+$volumes_dir = "${docker_folder}/${service_name}"
 $container_name = "files_${service_name}_1"
-$confdir = "${base_dir}/config"
-$src_dir = "${puppet_folder}/conf"
+$confdir = "${volumes_dir}/config"
+$src_dir = "${puppet_folder}/service/conf"
 
 user { 'www-data':
   ensure => present,
