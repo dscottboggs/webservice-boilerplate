@@ -3,11 +3,23 @@ from docker.types import IPAMConfig, IPAMPool, Mount
 import docker
 import json
 import os
+import argparse
 thisdir = os.path.dirname(os.path.realpath(__file__))
 dc = Config.DOCKER_CLIENT
 default_networks = ('bridge', 'host', 'none')
 Mount = docker.types.Mount
 project_root = os.path.join(thisdir, '..')
+
+argument_parser = argparse.ArgumentParser(
+    description="A boilerplate for a web service deployed behind an nginx reverse proxy with letsencrypt automated TLS."
+)
+argument_parser.add_argument(
+    "stop", default=False, action='store_true'
+)
+argument_parser.add_argument(
+    '--no-remove', default=False, action='store_true'
+)
+args = argument_parser.parse_args()
 def getdir(*args):
     """Create dir if not exists
 
@@ -38,7 +50,8 @@ def wipeclean():
 def get_subnet():
     return IPAMConfig(pool_configs=[IPAMPool(subnet=Config.available_subnets.pop())])
 
-wipeclean()
+if not args.no_remove:
+    wipeclean()
 
 testnetwork = dc.networks.create(
     name="TestNetwork",
@@ -46,8 +59,10 @@ testnetwork = dc.networks.create(
     ipam=get_subnet()
 )
 
-test_webserver_root = getdir(project_root, "files", "test-webserver")
+web_service_root = getdir(project_root, "files", "web-service")
+# ^^ filepath of a working directory
 nginx_proxy_container = dc.containers.create(
+# see help(dc.containers.run), create()'s documentation refers to it
     name="nginx-proxy-container",
     image="jwilder/nginx-proxy:latest",
     mounts=[
@@ -108,3 +123,7 @@ containers = {
         nginx_proxy_container, letsencrypt_companion, basic_web_server
     )
 }
+
+if not args.stop:
+    for container in containers.values():
+        container.start()
