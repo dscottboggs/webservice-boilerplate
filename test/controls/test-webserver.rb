@@ -37,7 +37,7 @@ Commercial support is available at
 
 control 'volumes' do                        # A unique ID for this control
   impact 0.7                                # The criticality, if this control fails.
-  title 'Check the volumes'  # A human-readable title
+  title 'Check the volumes'                 # A human-readable title
   desc 'Check that the proper files are in place'
   # config files checks
   describe file("#{base_dir}/config") do
@@ -72,7 +72,7 @@ control 'ports' do
   describe http('http://localhost/') do
     its('status') { should cmp 301 }
   end
-  describe http('http://localhost/') do
+  describe http('https://localhost/') do
     its('status') { should cmp 200 }
     its('body') { should cmp nginx_default_index }
     its('headers.Content-Type') { should cmp 'text/html' }
