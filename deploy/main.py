@@ -9,6 +9,8 @@ dc = Config.DOCKER_CLIENT
 default_networks = ('bridge', 'host', 'none')
 Mount = docker.types.Mount
 project_root = os.path.join(thisdir, '..')
+service_url = 'test.tams.tech'
+admin_email = 'sysadmin@tams.tech'
 
 argument_parser = argparse.ArgumentParser(
     description="A boilerplate for a web service deployed behind an nginx reverse proxy with letsencrypt automated TLS."
@@ -92,7 +94,7 @@ letsencrypt_companion = dc.containers.create(
     network=testnetwork.name,
     detach=True
 )
-basic_web_server = dc.containers.create(
+web_service = dc.containers.create(
     name="test-webserver",
     image='nginx:latest',
     mounts=[
@@ -109,11 +111,15 @@ basic_web_server = dc.containers.create(
             read_only=True,
         )
     ],
-    environment={'testvalue': "asdfjkl;"},
+    environment={
+        'VIRTUAL_HOST': service_url,
+        'DEFAULT_HOST': service_url,
+        'LETSENCRYPT_HOST': service_url,
+        'LETSENCRYPT_EMAIL': admin_email
+    },
     network=testnetwork.name,
     ports={
         80:  80,
-        443: 443
     },
     detach=True,
 )
