@@ -1,0 +1,12 @@
+name: test
+title: Testing InSpec Profile Building
+maintainer: D. Scott Boggs
+copyright: D. Scott Boggs
+copyright_email: you@example.com
+license: AGPL-3.0
+summary: An InSpec Compliance Profile
+version: 0.1.0
+supports:
+  - os-family: linux
+  - os-name: ubuntu
+    release: 16.04
