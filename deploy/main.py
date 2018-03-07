@@ -3,11 +3,11 @@ from docker.types import IPAMConfig, IPAMPool, Mount
 import docker
 import json
 import os
-__file__ = "main.py"
 thisdir = os.path.dirname(os.path.realpath(__file__))
 dc = Config.DOCKER_CLIENT
 default_networks = ('bridge', 'host', 'none')
 Mount = docker.types.Mount
+project_root = os.path.join(thisdir, '..')
 def getdir(*args):
     """Create dir if not exists
 
@@ -46,14 +46,36 @@ testnetwork = dc.networks.create(
     ipam=get_subnet()
 )
 
-test_webserver_root = getdir(
-    os.sep,
-    'home',
-    'scott',
-    'Documents',
-    'basic_nginx_deployment',
-    "files",
-    "test-webserver"
+test_webserver_root = getdir(project_root, "files", "test-webserver")
+nginx_proxy_container = dc.containers.create(
+    name="nginx-proxy-container",
+    image="jwilder/nginx-proxy:latest",
+    mounts=[
+        Mount(
+            type='bind',
+            target="/tmp/docker.sock",
+            source=Config.DOCKER_SOCKET_FILE_LOCATION,
+            read_only=True
+        ),
+        Mount(
+            type='bind',
+            target="/etc/nginx",
+            source=getdir(project_root, "files", "nginx-proxy-config")
+        )
+    ],
+    network=testnetwork.name,
+    ports={
+        80:  80,
+        443: 443
+    },
+    detach=True
+)
+letsencrypt_companion = dc.containers.create(
+    name="letsencrypt-companion",
+    image="jrcs/letsencrypt-nginx-proxy-companion",
+    volumes_from=nginx_proxy_container,
+    network=testnetwork.name,
+    detach=True
 )
 basic_web_server = dc.containers.create(
     name="test-webserver",
@@ -81,4 +103,8 @@ basic_web_server = dc.containers.create(
     detach=True,
 )
 
-basic_web_server.start()
+containers = {
+    container.name:container for container in (
+        nginx_proxy_container, letsencrypt_companion, basic_web_server
+    )
+}
