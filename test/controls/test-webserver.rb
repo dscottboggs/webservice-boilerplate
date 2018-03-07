@@ -70,13 +70,11 @@ control 'ports' do
     its('ports') { should cmp "0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp"}
   end
   describe http('http://localhost/') do
+    its('status') { should cmp 301 }
+  end
+  describe http('http://localhost/') do
     its('status') { should cmp 200 }
     its('body') { should cmp nginx_default_index }
     its('headers.Content-Type') { should cmp 'text/html' }
   end
-  # describe http('http://localhost/') do
-  #   its('status') { should cmp 200 }
-  #   its('body') { should cmp nginx_default_index }
-  #   its('headers.Content-Type') { should cmp 'text/html' }
-  # end
 end
