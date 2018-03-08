@@ -7,13 +7,16 @@ from hashlib import sha256 as sha2sum
 from sys import argv
 name = 'check_files'
 title = 'Docker volume file tests'
-location = argv[1] or get_path_of(
-    abspath(dirname(__file__)),
-    '..',
-    '..',
-    'files',
-    'DockerVolumes'
-)
+try:
+    location = argv[1]
+except IndexError:
+    location = get_path_of(
+        abspath(dirname(__file__)),
+        '..',
+        '..',
+        'files',
+        'DockerVolumes'
+    )
 if not isdir(location):
     print(location, "must be a directory!")
     exit(1)
