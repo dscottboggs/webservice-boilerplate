@@ -54,9 +54,10 @@ def wipeclean():
             network.remove()
 def get_subnet():
     return IPAMConfig(pool_configs=[IPAMPool(subnet=Config.available_subnets.pop())])
-def pull(**kwargs):
-    for status, progress, ident in dc.api.pull(**kwargs, stream=True, decode=True):
-        print(status, progress)
+def pull(repository, tag=None):
+    for status in dc.api.pull(repository, tag=tag or 'latest', stream=True):
+        if 'progress' in status.keys():
+            print(status['status'], status['progress'])
 
 if not args.no_remove:
     wipeclean()
@@ -70,6 +71,7 @@ testnetwork = dc.networks.create(
 for img in images.values():
     # check for images and pull if necessary.
     if img not in dc.images.list(all=True):
+        print("image", img, "not found")
         if ":" in img:
             pull(
                 repository=img.split(':', maxsplit=1)[0],
