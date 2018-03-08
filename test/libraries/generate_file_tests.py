@@ -4,9 +4,16 @@ from os.path import isdir, abspath, dirname
 from os import walk as all_files_in
 from os import listdir as ls
 from hashlib import sha256 as sha2sum
+from sys import argv
 name = 'check_files'
 title = 'Docker volume file tests'
-location = '{}/../../files/DockerVolumes/'.format(abspath(dirname(__file__)))
+location = argv[1] or get_path_of(
+    abspath(dirname(__file__)),
+    '..',
+    '..',
+    'files',
+    'DockerVolumes'
+)
 description = "Validity checks for files in {}".format(location)
 control_header = \
 '''control '{}' do
@@ -37,9 +44,9 @@ def describe_folder(folder):
     output = ''
     for path in ls(folder):
         try:
-            output += describe_file(folder + path)
+            output += describe_file(get_path_of(folder, path))
         except IsADirectoryError:
-            output += describe_folder(folder + path)
+            output += describe_folder(get_path_of(folder, path))
     return parent_test + output
 
 output += describe_folder(location)
