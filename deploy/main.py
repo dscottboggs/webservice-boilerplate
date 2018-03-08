@@ -3,7 +3,7 @@ from docker.types import IPAMConfig, IPAMPool, Mount
 import docker
 import json
 import os
-import argparse
+from sys import argv
 thisdir = os.path.dirname(os.path.realpath(__file__))
 dc = Config.DOCKER_CLIENT
 default_networks = ('bridge', 'host', 'none')
@@ -17,16 +17,19 @@ images = {
     'service': 'nginx:latest'
 }
 
-argument_parser = argparse.ArgumentParser(
-    description="A boilerplate for a web service deployed behind an nginx reverse proxy with letsencrypt automated TLS."
-)
-argument_parser.add_argument(
-    "stop", default=False, action='store_true'
-)
-argument_parser.add_argument(
-    '--no-remove', default=False, action='store_true'
-)
-args = argument_parser.parse_args()
+args = {
+    'stop': "stop" in argv,
+    'no_remove': "--no-remove" in argv
+}
+if len(argv) > 1 and not args.values():
+    print(
+        "A boilerplate for a web service deployed behind an nginx reverse proxy",
+        "with letsencrypt automated TLS.",
+        "   Options:",
+        "       stop            stops the services instead of starting them",
+        "       --no-remove     doesn't remove old containers. Will likely",
+        "                       lead to errors.")
+
 def getdir(*args):
     """Create dir if not exists
 
@@ -60,7 +63,7 @@ def pull(repository, tag=None):
         if 'progress' in status.keys():
             print(status['status'], status['progress'])
 
-if not args.no_remove:
+if not args['no_remove'] and not args['stop']:
     wipeclean()
 
 testnetwork = dc.networks.create(
@@ -154,7 +157,7 @@ print(
     "containers",
     sep='\n'
 )
-if not args.stop:
+if not args['stop']:
     for container in containers.values():
         print("starting container", container.name)
         container.start()
