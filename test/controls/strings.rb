@@ -1,4 +1,4 @@
-page_503 = '<html>
+$page_503 = '<html>
 <head><title>503 Service Temporarily Unavailable</title></head>
 <body bgcolor="white">
 <center><h1>503 Service Temporarily Unavailable</h1></center>
@@ -6,7 +6,7 @@ page_503 = '<html>
 </body>
 </html>
 '
-test_webserver_page_200 = '<!DOCTYPE html>
+$test_webserver_page_200 = '<!DOCTYPE html>
 <html>
 <head>
 <title>Welcome to nginx!</title>
@@ -32,7 +32,7 @@ Commercial support is available at
 </body>
 </html>
 '
-test_webserver_page_301 = '<html>
+$test_webserver_page_301 = '<html>
 <head><title>301 Moved Permanently</title></head>
 <body bgcolor="white">
 <center><h1>301 Moved Permanently</h1></center>

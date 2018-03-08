@@ -1,7 +1,7 @@
 # encoding: utf-8
 # copyright: 2018, D. Scott Boggs, Jr.
 
-include 'strings'
+require_relative 'strings'
 
 home_dir = "/home/scott"
 service_names = ['test-webserver']
@@ -9,8 +9,8 @@ service_urls = ['test']
 services = {
   'test_webserver' => {
     'url' => 'test',
-    'page' => test_webserver_page_200,
-    'redirectpage' => test_webserver_page_301
+    'page' => $test_webserver_page_200,
+    'redirectpage' => $test_webserver_page_301
   }
 }
 domain = 'tams.tech'
@@ -33,18 +33,18 @@ control 'manual_tests' do
   end
   describe http('http://localhost/') do
     its('status') { should cmp 503 }
-    its('body') { should cmp page_503 }
+    its('body') { should cmp $page_503 }
   end
   services.each do |svc_name, service|
     describe docker_container(svc_name) do
       it { should exist }
       it { should be_running }
     end
-    describe http("http://#{url}.#{domain}/") do
+    describe http("http://#{service['url']}.#{domain}/") do
       its('status') { should cmp 301 }
       its('body') { should cmp service['redirectpage'] }
     end
-    describe http("https://#{url}.#{domain}/") do
+    describe http("https://#{service['url']}.#{domain}/") do
       its('status') { should cmp 200 }
       its('body') { should cmp service['page'] }
       its('headers.Content-Type') { should cmp 'text/html' }
