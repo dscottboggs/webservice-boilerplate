@@ -37,9 +37,9 @@ def describe_folder(folder):
     output = ''
     for path in ls(folder):
         try:
-            output += describe_file(folder + '/' + path)
+            output += describe_file(folder + path)
         except IsADirectoryError:
-            output += describe_folder(folder + '/' + path)
+            output += describe_folder(folder + path)
     return parent_test + output
 
 output += describe_folder(location)
