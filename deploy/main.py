@@ -119,12 +119,14 @@ letsencrypt_companion = dc.containers.create(
     image=images['letsencrypt_companion'],
     volumes_from=nginx_proxy_container.id,
     network=testnetwork.name,
-    mounts=Mount(
-        type='bind',
-        target="/var/run/docker.sock",
-        source=Config.DOCKER_SOCKET_FILE_LOCATION,
-        read_only=True
-    ),
+    mounts=[
+        Mount(
+            type='bind',
+            target="/var/run/docker.sock",
+            source=Config.DOCKER_SOCKET_FILE_LOCATION,
+            read_only=True
+        )
+    ],
     detach=True
 )
 web_service = dc.containers.create(
