@@ -24,8 +24,8 @@ description = "Validity checks for files in {}".format(location)
 control_header = \
 '''control '{}' do
   impact 1
-  title {}
-  desc {}'''.format(name, title, description)
+  title '{}'
+  desc '{}' '''.format(name, title, description)
 control_footer = '\nend\n'
 folder_output='''
   describe file('{}') do

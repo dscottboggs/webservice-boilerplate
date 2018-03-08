@@ -90,7 +90,7 @@ nginx_proxy_container = dc.containers.create(
 letsencrypt_companion = dc.containers.create(
     name="letsencrypt-companion",
     image="jrcs/letsencrypt-nginx-proxy-companion",
-    volumes_from=nginx_proxy_container,
+    volumes_from=nginx_proxy_container.id,
     network=testnetwork.name,
     detach=True
 )
