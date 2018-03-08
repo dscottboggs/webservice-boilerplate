@@ -150,7 +150,7 @@ containers = {
 }
 print(
     "Successfully created",
-    json.dumps(containers, indent=2),
+    json.dumps(containers.keys(), indent=2),
     "containers",
     sep='\n'
 )
