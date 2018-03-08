@@ -1,7 +1,7 @@
 # encoding: utf-8
 # copyright: 2018, D. Scott Boggs, Jr.
 
-require 'strings'
+include 'strings'
 
 home_dir = "/home/scott"
 service_names = ['test-webserver']
