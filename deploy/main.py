@@ -140,9 +140,6 @@ web_service = dc.containers.create(
         'LETSENCRYPT_EMAIL': admin_email
     },
     network=testnetwork.name,
-    ports={
-        80:  80,
-    },
     detach=True,
 )
 
