@@ -14,6 +14,9 @@ location = argv[1] or get_path_of(
     'files',
     'DockerVolumes'
 )
+if not isdir(location):
+    print(location, "must be a directory!")
+    exit(1)
 description = "Validity checks for files in {}".format(location)
 control_header = \
 '''control '{}' do
@@ -46,7 +49,12 @@ def describe_folder(folder):
         try:
             output += describe_file(get_path_of(folder, path))
         except IsADirectoryError:
-            output += describe_folder(get_path_of(folder, path))
+            try:
+                output += describe_folder(get_path_of(folder, path))
+            except FileNotFoundError:
+                # It literally makes no sense for there to be a FileNotFoundError
+                # within this section.
+                pass
     return parent_test + output
 
 output += describe_folder(location)
