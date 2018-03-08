@@ -11,6 +11,11 @@ Mount = docker.types.Mount
 project_root = os.path.join(thisdir, '..')
 service_url = 'test.tams.tech'
 admin_email = 'sysadmin@tams.tech'
+images = {
+    'nginx_proxy_container': "jwilder/nginx-proxy:latest",
+    'letsencrypt_companion': "jrcs/letsencrypt-nginx-proxy-companion",
+    'service': 'nginx:latest'
+}
 
 argument_parser = argparse.ArgumentParser(
     description="A boilerplate for a web service deployed behind an nginx reverse proxy with letsencrypt automated TLS."
@@ -30,7 +35,6 @@ def getdir(*args):
     if not os.path.isdir(os.path.join(*args)):
         os.makedirs(os.path.join(*args))
     return os.path.join(*args)
-
 volumes_folder = getdir(thisdir, "volumes")
 def wipeclean():
     """Remove all current networks and containers."""
@@ -48,9 +52,11 @@ def wipeclean():
     for network in networks():
         if network.name not in default_networks:
             network.remove()
-
 def get_subnet():
     return IPAMConfig(pool_configs=[IPAMPool(subnet=Config.available_subnets.pop())])
+def pull(**kwargs):
+    for status, progress, ident in dc.api.pull(**kwargs, stream=True, decode=True):
+        print(status, progress)
 
 if not args.no_remove:
     wipeclean()
@@ -61,12 +67,23 @@ testnetwork = dc.networks.create(
     ipam=get_subnet()
 )
 
+for img in images.values():
+    # check for images and pull if necessary.
+    if img not in dc.images.list(all=True):
+        if ":" in img:
+            pull(
+                repository=img.split(':', maxsplit=1)[0],
+                tag=img.split(':', maxsplit=1)[0]
+            )
+        else:
+            pull(repository=img)
+
 web_service_root = getdir(project_root, "files", "DockerVolumes")
 # ^^ filepath of a working directory
 nginx_proxy_container = dc.containers.create(
 # see help(dc.containers.run), create()'s documentation refers to it
     name="nginx-proxy-container",
-    image="jwilder/nginx-proxy:latest",
+    image=images['nginx_proxy_container'],
     mounts=[
         Mount(
             type='bind',
@@ -89,14 +106,14 @@ nginx_proxy_container = dc.containers.create(
 )
 letsencrypt_companion = dc.containers.create(
     name="letsencrypt-companion",
-    image="jrcs/letsencrypt-nginx-proxy-companion",
+    image=images['letsencrypt_companion'],
     volumes_from=nginx_proxy_container.id,
     network=testnetwork.name,
     detach=True
 )
 web_service = dc.containers.create(
     name="test-webserver",
-    image='nginx:latest',
+    image=images['service'],
     mounts=[
         Mount(
             type='bind',
