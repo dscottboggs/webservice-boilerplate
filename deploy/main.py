@@ -100,6 +100,11 @@ nginx_proxy_container = dc.containers.create(
             type='bind',
             target="/etc/nginx",
             source=getdir(web_service_root, "nginx-proxy", "conf")
+        ),
+        Mount(
+            type='bind',
+            target="/usr/share/nginx/html",
+            source=getdir(web_service_root, "nginx-proxy", "webroot")
         )
     ],
     network=testnetwork.name,
@@ -114,6 +119,12 @@ letsencrypt_companion = dc.containers.create(
     image=images['letsencrypt_companion'],
     volumes_from=nginx_proxy_container.id,
     network=testnetwork.name,
+    mounts=Mount(
+        type='bind',
+        target="/var/run/docker.sock",
+        source=Config.DOCKER_SOCKET_FILE_LOCATION,
+        read_only=True
+    ),
     detach=True
 )
 web_service = dc.containers.create(
