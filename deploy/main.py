@@ -56,6 +56,7 @@ def get_subnet():
     return IPAMConfig(pool_configs=[IPAMPool(subnet=Config.available_subnets.pop())])
 def pull(repository, tag=None):
     for status in dc.api.pull(repository, tag=tag or 'latest', stream=True):
+        status = json.load(status.decode())
         if 'progress' in status.keys():
             print(status['status'], status['progress'])
 
