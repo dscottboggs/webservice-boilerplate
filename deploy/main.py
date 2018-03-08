@@ -148,7 +148,13 @@ containers = {
         nginx_proxy_container, letsencrypt_companion, web_service
     )
 }
-
+print(
+    "Successfully created",
+    json.dumps(containers, indent=2),
+    "containers",
+    sep='\n'
+)
 if not args.stop:
     for container in containers.values():
+        print("starting container", container.name)
         container.start()
