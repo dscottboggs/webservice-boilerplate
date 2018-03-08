@@ -75,7 +75,7 @@ for img in images.values():
         if ":" in img:
             pull(
                 repository=img.split(':', maxsplit=1)[0],
-                tag=img.split(':', maxsplit=1)[0]
+                tag=img.split(':', maxsplit=1)[1]
             )
         else:
             pull(repository=img)
