@@ -72,7 +72,6 @@ testnetwork = dc.networks.create(
 for img in images.values():
     # check for images and pull if necessary.
     if img not in dc.images.list(all=True):
-        print("image", img, "not found")
         if ":" in img:
             pull(
                 repository=img.split(':', maxsplit=1)[0],
@@ -127,7 +126,7 @@ web_service = dc.containers.create(
         Mount(
             type='bind',
             target='/etc/nginx',
-            source=getdir(test_webserver_root, "service", "conf"),
+            source=getdir(web_service_root, "service", "conf"),
             read_only=True,
         )
     ],
@@ -146,7 +145,7 @@ web_service = dc.containers.create(
 
 containers = {
     container.name:container for container in (
-        nginx_proxy_container, letsencrypt_companion, basic_web_server
+        nginx_proxy_container, letsencrypt_companion, web_service
     )
 }
 
