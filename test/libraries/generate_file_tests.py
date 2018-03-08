@@ -1,16 +1,12 @@
 # Generate InSpec tests for basic files.
 from os.path import join as get_path_of
-from os.path import isdir
+from os.path import isdir, abspath, dirname
 from os import walk as all_files_in
 from os import listdir as ls
 from hashlib import sha256 as sha2sum
 name = 'check_files'
 title = 'Docker volume file tests'
-location = '{}/../../files/DockerVolumes/'.format(
-    os.path.abspath(
-        os.path.dirname(__file__)
-    )
-)
+location = '{}/../../files/DockerVolumes/'.format(abspath(dirname(__file__)))
 description = "Validity checks for files in {}".format(location)
 control_header = \
 '''control '{}' do
