@@ -5,37 +5,19 @@ title 'Configuration tests'
 
 home_dir = "/home/scott"
 service_name = container_name = 'test-webserver'
-docker_folder = "#{home_dir}/Documents/basic_nginx_deployment/files"
+docker_folder = "#{home_dir}/Documents/boilerplate/webservice/files/DockerVolumes"
 base_dir = "#{docker_folder}/#{service_name}"
-nginx_default_index = '<!DOCTYPE html>
-<html>
-<head>
-<title>Welcome to nginx!</title>
-<style>
-    body {
-        width: 35em;
-        margin: 0 auto;
-        font-family: Tahoma, Verdana, Arial, sans-serif;
-    }
-</style>
-</head>
-<body>
-<h1>Welcome to nginx!</h1>
-<p>If you see this page, the nginx web server is successfully installed and
-working. Further configuration is required.</p>
+proxy_dir = "#{docker_folder}/nginx-proxy"
 
-<p>For online documentation and support please refer to
-<a href="http://nginx.org/">nginx.org</a>.<br/>
-Commercial support is available at
-<a href="http://nginx.com/">nginx.com</a>.</p>
+control 'proxy' do
+  impact 1
+  title 'Check the reverse proxy container stuff'
+  describe file("#{proxy_dir}/conf") do
+    it { should be_directory }
+  end
+end
 
-<p><em>Thank you for using nginx.</em></p>
-</body>
-</html>
-'
-
-
-control 'volumes' do                        # A unique ID for this control
+control 'service-volumes' do                        # A unique ID for this control
   impact 0.7                                # The criticality, if this control fails.
   title 'Check the volumes'                 # A human-readable title
   desc 'Check that the proper files are in place'
