@@ -6,7 +6,6 @@ import os
 from sys import argv
 from extras import *
 
-default_networks = ('bridge', 'host', 'none')
 dc = Config.DOCKER_CLIENT
 Mount = docker.types.Mount
 
