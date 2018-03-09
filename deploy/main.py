@@ -66,6 +66,10 @@ def pull(repository, tag=None):
 if not args['no_remove'] and not args['stop']:
     wipeclean()
 
+if not os.access(os.path.join(project_root, "files", "letsencrypt_store.json"), os.F_OK):
+    open(os.path.join(project_root, "files", "letsencrypt_store.json"), 'r').close()
+    os.chmod(os.path.join(project_root, "files", "acme.json"), mode='0644')
+
 testnetwork = dc.networks.create(
     name="TestNetwork",
     driver="bridge",
