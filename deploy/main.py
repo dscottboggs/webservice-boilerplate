@@ -4,6 +4,7 @@ import docker
 import json
 import os
 from sys import argv
+from extras import *
 thisdir = os.path.dirname(os.path.realpath(__file__))
 dc = Config.DOCKER_CLIENT
 default_networks = ('bridge', 'host', 'none')
@@ -18,53 +19,9 @@ images = {
     'wordpress_blog': 'wordpress',
     'wordpress_database': 'mariadb'
 }
-WORDPRESS_DATABASE_PASSWORD = Config.num_to_alpha(200, randval=True)
 
-args = {
-    'stop': "stop" in argv or "--stop" in argv,
-    'no_remove': "--no-remove" in argv
-}
-if len(argv) > 1 and not args.values():
-    print(
-        "A boilerplate for a web service deployed behind an nginx reverse proxy",
-        "with letsencrypt automated TLS.",
-        "   Options:",
-        "       stop, --stop    Doesn't start the containers up at the end.",
-        "       --no-remove     doesn't remove old containers. Will likely",
-        "                       lead to errors.")
-
-def getdir(*args):
-    """Create dir if not exists
-
-    Full path should be passed as individual arguments, as they are forwarded
-    to os.path.join()"""
-    if not os.path.isdir(os.path.join(*args)):
-        os.makedirs(os.path.join(*args))
-    return os.path.join(*args)
+args = parseargs(argv)
 volumes_folder = getdir(thisdir, "volumes")
-def wipeclean():
-    """Remove all current networks and containers."""
-    containers = lambda running=False: dc.containers.list(all=not running)
-    networks = dc.networks.list
-    for container in containers(running=True):
-        container.stop()
-    for container in containers():
-        container.remove()
-    if len(containers()):
-        print("Current list of containers is not empty:", containers())
-        for container in containers(running=True):
-            print(container, "is running still.")
-        exit(1)
-    for network in networks():
-        if network.name not in default_networks:
-            network.remove()
-def get_subnet():
-    return IPAMConfig(pool_configs=[IPAMPool(subnet=Config.available_subnets.pop())])
-def pull(repository, tag=None):
-    for status in dc.api.pull(repository, tag=tag or 'latest', stream=True):
-        status = json.loads(status.decode())
-        if 'progress' in status.keys():
-            print(status['status'], status['progress'])
 
 if not args['no_remove'] and not args['stop']:
     wipeclean()
@@ -75,16 +32,7 @@ testnetwork = dc.networks.create(
     ipam=get_subnet()
 )
 
-for img in images.values():
-    # check for images and pull if necessary.
-    if img not in dc.images.list(all=True):
-        if ":" in img:
-            pull(
-                repository=img.split(':', maxsplit=1)[0],
-                tag=img.split(':', maxsplit=1)[1]
-            )
-        else:
-            pull(repository=img)
+check_images(images)
 
 web_service_root = getdir(project_root, "files", "DockerVolumes")
 # ^^ filepath of a working directory
@@ -132,15 +80,29 @@ letsencrypt_companion = dc.services.create(
     ],
     detach=True
 )
+for name, secret in {
+        "{}.MYSQL_PASSWORD".format(service_name): get_new_password(),
+        "{}.MYSQL_USER".format(service_name): service_name,
+    }:
+    Config.SECRETS.create_secret(
+        name, secret
+    )
+
 wordpress_database = dc.containers.create(
-    name="{}_database".format(service_name),
+    name='_'.join(service_name, "database"),
     image=images['wordpress_database'],
     network=testnetwork.name,
     environment={
-        "MYSQL_USER": service_name,
+        "MYSQL_USER_FILE": secretpath('.'.join(service_name, "MYSQL_USER")),
         "MYSQL_RANDOM_ROOT_PASSWORD": True,
-        "MYSQL_PASSWORD": WORDPRESS_DATABASE_PASSWORD,
+        "MYSQL_PASSWORD_FILE": secretpath(
+            '.'.join(service_name, "MYSQL_PASSWORD")
+        ),
     },
+    secrets=[
+        Config.secrets.get_secret('.'.join(service_name, "MYSQL_PASSWORD")),
+        Config.secrets.get_secret('.'.join(service_name, "MYSQL_USER")),
+    ]
     mounts=[
         Mount(
             type='bind',
@@ -173,10 +135,18 @@ wordpress_blog = dc.containers.create(
         'DEFAULT_HOST': service_url,
         'LETSENCRYPT_HOST': service_url,
         'LETSENCRYPT_EMAIL': admin_email,
-        'WORDPRESS_DB_HOST': "{}_url".format(service_name),
-        'WORDPRESS_DB_USER': service_name,
-        'WORDPRESS_DB_PASSWORD': WORDPRESS_DATABASE_PASSWORD
+        'WORDPRESS_DB_HOST': '_'.join(service_name, "database"),
+        'WORDPRESS_DB_USER_FILE': secretpath(
+            '.'.join(service_name, "MYSQL_USER")
+        ),
+        'WORDPRESS_DB_PASSWORD_FILE': secretpath(
+            '.'.join(service_name, "MYSQL_PASSWORD")
+        )
     },
+    secrets=[
+        Config.secrets.get_secret("{}.MYSQL_PASSWORD".format(service_name))
+        Config.secrets.get_secret("{}.MYSQL_USER".format(service_name))
+    ]
     network=testnetwork.name,
     detach=True,
 )
@@ -189,7 +159,7 @@ containers = {  # this is a "dictionary comprehension"
         wordpress_database
     )
 }
-print(
+msg(
     "Successfully created",
     json.dumps(tuple(containers.keys()), indent=2),
     "containers",
@@ -197,5 +167,5 @@ print(
 )
 if not args['stop']:
     for container in containers.values():
-        print("starting container", container.name)
+        msg("starting container", container.name)
         container.start()
