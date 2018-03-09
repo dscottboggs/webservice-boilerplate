@@ -10,15 +10,18 @@ default_networks = ('bridge', 'host', 'none')
 Mount = docker.types.Mount
 project_root = os.path.join(thisdir, '..')
 service_url = 'test.tams.tech'
+service_name = 'test_wordpress'
 admin_email = 'sysadmin@tams.tech'
 images = {
-    'nginx_proxy_container': "jwilder/nginx-proxy:latest",
+    'nginx_proxy_container': "jwilder/nginx-proxy",
     'letsencrypt_companion': "jrcs/letsencrypt-nginx-proxy-companion",
-    'service': 'nginx:latest'
+    'wordpress_blog': 'wordpress',
+    'wordpress_database': 'mariadb'
 }
+WORDPRESS_DATABASE_PASSWORD = Config.num_to_alpha(200, randval=True)
 
 args = {
-    'stop': "stop" in argv,
+    'stop': "stop" in argv or "--stop" in argv,
     'no_remove': "--no-remove" in argv
 }
 if len(argv) > 1 and not args.values():
@@ -26,7 +29,7 @@ if len(argv) > 1 and not args.values():
         "A boilerplate for a web service deployed behind an nginx reverse proxy",
         "with letsencrypt automated TLS.",
         "   Options:",
-        "       stop            stops the services instead of starting them",
+        "       stop, --stop    Doesn't start the containers up at the end.",
         "       --no-remove     doesn't remove old containers. Will likely",
         "                       lead to errors.")
 
@@ -129,19 +132,38 @@ letsencrypt_companion = dc.containers.create(
     ],
     detach=True
 )
-web_service = dc.containers.create(
-    name="test-webserver",
-    image=images['service'],
+wordpress_database = dc.containers.create(
+    name="{}_database".format(service_name),
+    image=images['wordpress_database'],
+    network=testnetwork.name,
+    environment={
+        "MYSQL_USER": service_name,
+        "MYSQL_RANDOM_ROOT_PASSWORD": True,
+        "MYSQL_PASSWORD": WORDPRESS_DATABASE_PASSWORD,
+    },
     mounts=[
         Mount(
             type='bind',
-            target='/usr/share/nginx/html',
+            target='/var/lib/mysql',
+            source=getdir(web_service_root, "service", "database"),
+            read_only=True
+        )
+    ]
+    detach=True
+)
+wordpress_blog = dc.containers.create(
+    name=service_name,
+    image=images['wordpress_blog'],
+    mounts=[
+        Mount(
+            type='bind',
+            target='/var/www/html',
             source=getdir(web_service_root, "service", "webroot"),
             read_only=True,
         ),
         Mount(
             type='bind',
-            target='/etc/nginx',
+            target='/etc/apache2',
             source=getdir(web_service_root, "service", "conf"),
             read_only=True,
         )
@@ -150,15 +172,21 @@ web_service = dc.containers.create(
         'VIRTUAL_HOST': service_url,
         'DEFAULT_HOST': service_url,
         'LETSENCRYPT_HOST': service_url,
-        'LETSENCRYPT_EMAIL': admin_email
+        'LETSENCRYPT_EMAIL': admin_email,
+        'WORDPRESS_DB_HOST': "{}_url".format(service_name),
+        'WORDPRESS_DB_USER': service_name,
+        'WORDPRESS_DB_PASSWORD': WORDPRESS_DATABASE_PASSWORD
     },
     network=testnetwork.name,
     detach=True,
 )
 
-containers = {
+containers = {  # this is a "dictionary comprehension"
     container.name:container for container in (
-        nginx_proxy_container, letsencrypt_companion, web_service
+        nginx_proxy_container,
+        letsencrypt_companion,
+        wordpress_blog,
+        wordpress_database
     )
 }
 print(
