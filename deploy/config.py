@@ -75,6 +75,21 @@ def msg(msg, *args):
         outstr+=line+'\n'
     return outstr
 
+class SecretStore():
+    """A place to store and retrieve docker secrets."""
+    get_secrets = docker.secrets.list
+    get_secret = lambda key: return self.secrets[key]
+    def __init__(self):
+        self.secrets = {}
+    def create_secret(self, key, value):
+        """Store a key-value pair as a docker secret."""
+        for secret in self.get_secrets():
+            if secret.name == key:
+                secret.remove()
+        self.secrets.update({
+            key: docker.secrets.create(name=key, data=value)
+        })
+
 class Config():
     """Configuration items"""
 

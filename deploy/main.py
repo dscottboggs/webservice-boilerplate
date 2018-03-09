@@ -86,7 +86,7 @@ for img in images.values():
 
 web_service_root = getdir(project_root, "files", "DockerVolumes")
 # ^^ filepath of a working directory
-nginx_proxy_container = dc.containers.create(
+nginx_proxy_container = dc.services.create(
 # see help(dc.containers.run), create()'s documentation refers to it
     name="nginx-proxy-container",
     image=images['nginx_proxy_container'],
@@ -115,7 +115,7 @@ nginx_proxy_container = dc.containers.create(
     },
     detach=True
 )
-letsencrypt_companion = dc.containers.create(
+letsencrypt_companion = dc.services.create(
     name="letsencrypt-companion",
     image=images['letsencrypt_companion'],
     volumes_from=nginx_proxy_container.id,
@@ -130,13 +130,13 @@ letsencrypt_companion = dc.containers.create(
     ],
     detach=True
 )
-wordpress_database = dc.containers.create(
+wordpress_database = dc.services.create(
     name="wordpress_database",
     image=images['wordpress_database'],
     network=testnetwork.name,
     detach=True
 )
-wordpress_blog = dc.containers.create(
+wordpress_blog = dc.services.create(
     name="test-webserver",
     image=images['wordpress_blog'],
     mounts=[
