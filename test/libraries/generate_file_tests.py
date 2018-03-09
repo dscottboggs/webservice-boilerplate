@@ -38,11 +38,27 @@ file_output = '''
   end'''
 def describe_file(*args):
     """Create a describe test for a particular file."""
-    return file_output.format(
-        get_path_of(*args),
-        sha2sum(open(get_path_of(*args)).read().encode()).hexdigest(),
-        '{', '}'
-    )
+    print("decoding file at", get_path_of(*args))
+    try:
+        return file_output.format(
+            get_path_of(*args),
+            sha2sum(
+                open(
+                    get_path_of(*args), 'r'
+                ).read().encode()
+            ).hexdigest(),
+            '{', '}'
+        )
+    except UnicodeDecodeError:
+        return file_output.format(
+            get_path_of(*args),
+            sha2sum(
+                open(
+                    get_path_of(*args), 'rb'
+                ).read().encode()
+            ).hexdigest(),
+            '{', '}'
+        )
 
 output = control_header
 def describe_folder(folder):
