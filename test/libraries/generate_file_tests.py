@@ -38,7 +38,6 @@ file_output = '''
   end'''
 def describe_file(*args):
     """Create a describe test for a particular file."""
-    print("decoding file at", get_path_of(*args))
     try:
         return file_output.format(
             get_path_of(*args),
@@ -55,7 +54,7 @@ def describe_file(*args):
             sha2sum(
                 open(
                     get_path_of(*args), 'rb'
-                ).read().encode()
+                ).read()
             ).hexdigest(),
             '{', '}'
         )
