@@ -2,13 +2,25 @@ import docker
 import logging
 import random
 from logging.config import dictConfig
+from os import makedirs as mkdir
 from os.path import dirname as parent_dir_of
+from os.path import realpath as find
+from os.path import join as makepath
+from os.path import isdir
 from textwrap import dedent, wrap
 
 def get_docker_client(location, api_version):
     from docker import DockerClient
     return DockerClient(location, api_version)
 
+def getdir(*args):
+    """Create dir if not exists
+
+    Full path should be passed as individual arguments, as they are forwarded
+    to os.path.join()"""
+    if not isdir(makepath(*args)):
+        mkdir(makepath(*args))
+    return makepath(*args)
 
 def get_logging_config():
     try:
@@ -78,7 +90,7 @@ class Config():
     logger = logging.getLogger()
     IMAGE_PULL_TIMEOUT = 300
     ADVERTISE_ADDR = "192.168.1.1:21257"
-    thisdir = os.path.dirname(os.path.realpath(__file__))
+    thisdir = parent_dir_of(find(__file__))
     volumes_folder = getdir(thisdir, '..', "files", "DockerVolumes")
     service_url = 'test.tams.tech'
     service_name = 'test_wordpress'

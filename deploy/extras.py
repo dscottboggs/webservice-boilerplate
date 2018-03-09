@@ -1,6 +1,6 @@
 import os
 from deploy.config import Config
-from random import getrandombits as random
+from random import getrandbits as random
 def msg(msg, *args):
     """Handle an assertion message without needing to write dedent/wrap every
     time.
