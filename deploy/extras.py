@@ -3,7 +3,7 @@ import json
 from deploy.config import Config
 from random import getrandbits as random
 from docker.types import IPAMConfig, IPAMPool
-from textwrap import dedent
+from textwrap import dedent,wrap
 
 def msg(msg, *args):
     """Handle an assertion message without needing to write dedent/wrap every

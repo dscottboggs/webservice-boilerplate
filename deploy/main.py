@@ -21,7 +21,7 @@ testnetwork = dc.networks.create(
 check_images(Config.images)
 
 if not dc.swarm.init(advertise_addr=Config.ADVERTISE_ADDR):
-    msg("Swarm init failed!")
+    print(msg("Swarm init failed!"))
     exit(2)
 
 # ^^ filepath of a working directory
@@ -148,13 +148,13 @@ containers = {  # this is a "dictionary comprehension"
         wordpress_database
     )
 }
-msg(
+print(msg(
     "Successfully created",
     json.dumps(tuple(containers.keys()), indent=2),
     "containers",
     sep='\n'
-)
+))
 if not args['stop']:
     for container in containers.values():
-        msg("starting container", container.name)
+        print(msg("starting container", container.name))
         container.start()
