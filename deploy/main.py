@@ -12,13 +12,14 @@ project_root = os.path.join(thisdir, '..')
 service_url = 'test.tams.tech'
 admin_email = 'sysadmin@tams.tech'
 images = {
-    'nginx_proxy_container': "jwilder/nginx-proxy:latest",
+    'nginx_proxy_container': "jwilder/nginx-proxy",
     'letsencrypt_companion': "jrcs/letsencrypt-nginx-proxy-companion",
-    'service': 'nginx:latest'
+    'wordpress_blog': 'wordpress',
+    'wordpress_database': 'mariadb'
 }
 
 args = {
-    'stop': "stop" in argv,
+    'stop': "stop" in argv or "--stop" in argv,
     'no_remove': "--no-remove" in argv
 }
 if len(argv) > 1 and not args.values():
@@ -26,7 +27,7 @@ if len(argv) > 1 and not args.values():
         "A boilerplate for a web service deployed behind an nginx reverse proxy",
         "with letsencrypt automated TLS.",
         "   Options:",
-        "       stop            stops the services instead of starting them",
+        "       stop, --stop    Doesn't start the containers up at the end.",
         "       --no-remove     doesn't remove old containers. Will likely",
         "                       lead to errors.")
 
@@ -129,19 +130,25 @@ letsencrypt_companion = dc.containers.create(
     ],
     detach=True
 )
-web_service = dc.containers.create(
+wordpress_database = dc.containers.create(
+    name="wordpress_database",
+    image=images['wordpress_database'],
+    network=testnetwork.name,
+    detach=True
+)
+wordpress_blog = dc.containers.create(
     name="test-webserver",
-    image=images['service'],
+    image=images['wordpress_blog'],
     mounts=[
         Mount(
             type='bind',
-            target='/usr/share/nginx/html',
+            target='/var/www/html',
             source=getdir(web_service_root, "service", "webroot"),
             read_only=True,
         ),
         Mount(
             type='bind',
-            target='/etc/nginx',
+            target='/etc/apache2',
             source=getdir(web_service_root, "service", "conf"),
             read_only=True,
         )
@@ -156,9 +163,12 @@ web_service = dc.containers.create(
     detach=True,
 )
 
-containers = {
+containers = {  # this is a "dictionary comprehension"
     container.name:container for container in (
-        nginx_proxy_container, letsencrypt_companion, web_service
+        nginx_proxy_container,
+        letsencrypt_companion,
+        wordpress_blog,
+        wordpress_database
     )
 }
 print(
