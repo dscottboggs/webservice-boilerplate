@@ -1,27 +1,16 @@
-from deploy.config import Config
+from config import Config
 from docker.types import IPAMConfig, IPAMPool, Mount
 import docker
 import json
 import os
 from sys import argv
 from extras import *
-thisdir = os.path.dirname(os.path.realpath(__file__))
-dc = Config.DOCKER_CLIENT
+
 default_networks = ('bridge', 'host', 'none')
+dc = Config.DOCKER_CLIENT
 Mount = docker.types.Mount
-project_root = os.path.join(thisdir, '..')
-service_url = 'test.tams.tech'
-service_name = 'test_wordpress'
-admin_email = 'sysadmin@tams.tech'
-images = {
-    'nginx_proxy_container': "jwilder/nginx-proxy",
-    'letsencrypt_companion': "jrcs/letsencrypt-nginx-proxy-companion",
-    'wordpress_blog': 'wordpress',
-    'wordpress_database': 'mariadb'
-}
 
 args = parseargs(argv)
-volumes_folder = getdir(thisdir, "volumes")
 
 if not args['no_remove'] and not args['stop']:
     wipeclean()
@@ -38,7 +27,6 @@ if not dc.swarm.init(advertise_addr=Config.ADVERTISE_ADDR):
     msg("Swarm init failed!")
     exit(2)
 
-web_service_root = getdir(project_root, "files", "DockerVolumes")
 # ^^ filepath of a working directory
 nginx_proxy_container = dc.services.create(
 # see help(dc.containers.run), create()'s documentation refers to it
@@ -54,12 +42,12 @@ nginx_proxy_container = dc.services.create(
         Mount(
             type='bind',
             target="/etc/nginx",
-            source=getdir(web_service_root, "nginx-proxy", "conf")
+            source=getdir(Config.volumes_folder, "nginx-proxy", "conf")
         ),
         Mount(
             type='bind',
             target="/usr/share/nginx/html",
-            source=getdir(web_service_root, "nginx-proxy", "webroot")
+            source=getdir(Config.volumes_folder, "nginx-proxy", "webroot")
         )
     ],
     network=testnetwork.name,
@@ -85,71 +73,71 @@ letsencrypt_companion = dc.services.create(
     detach=True
 )
 for name, secret in {
-        "{}.MYSQL_PASSWORD".format(service_name): get_new_password(),
-        "{}.MYSQL_USER".format(service_name): service_name,
+        "{}.MYSQL_PASSWORD".format(Config.service_name): get_new_password(),
+        "{}.MYSQL_USER".format(Config.service_name): Config.service_name,
     }:
     Config.SECRETS.create_secret(
         name, secret
     )
 
 wordpress_database = dc.containers.create(
-    name='_'.join(service_name, "database"),
+    name='_'.join(Config.service_name, "database"),
     image=images['wordpress_database'],
     network=testnetwork.name,
     environment={
-        "MYSQL_USER_FILE": secretpath('.'.join(service_name, "MYSQL_USER")),
+        "MYSQL_USER_FILE": secretpath('.'.join(Config.service_name, "MYSQL_USER")),
         "MYSQL_RANDOM_ROOT_PASSWORD": True,
         "MYSQL_PASSWORD_FILE": secretpath(
-            '.'.join(service_name, "MYSQL_PASSWORD")
+            '.'.join(Config.service_name, "MYSQL_PASSWORD")
         ),
     },
     secrets=[
-        Config.secrets.get_secret('.'.join(service_name, "MYSQL_PASSWORD")),
-        Config.secrets.get_secret('.'.join(service_name, "MYSQL_USER")),
+        Config.secrets.get_secret('.'.join(Config.service_name, "MYSQL_PASSWORD")),
+        Config.secrets.get_secret('.'.join(Config.service_name, "MYSQL_USER")),
     ],
     mounts=[
         Mount(
             type='bind',
             target='/var/lib/mysql',
-            source=getdir(web_service_root, "service", "database"),
+            source=getdir(Config.volumes_folder, "service", "database"),
             read_only=True
         )
     ],
     detach=True
 )
 wordpress_blog = dc.containers.create(
-    name=service_name,
+    name=Config.service_name,
     image=images['wordpress_blog'],
     mounts=[
         Mount(
             type='bind',
             target='/var/www/html',
-            source=getdir(web_service_root, "service", "webroot"),
+            source=getdir(Config.volumes_folder, "service", "webroot"),
             read_only=True,
         ),
         Mount(
             type='bind',
             target='/etc/apache2',
-            source=getdir(web_service_root, "service", "conf"),
+            source=getdir(Config.volumes_folder, "service", "conf"),
             read_only=True,
         )
     ],
     environment={
-        'VIRTUAL_HOST': service_url,
-        'DEFAULT_HOST': service_url,
-        'LETSENCRYPT_HOST': service_url,
-        'LETSENCRYPT_EMAIL': admin_email,
-        'WORDPRESS_DB_HOST': '_'.join(service_name, "database"),
+        'VIRTUAL_HOST': Config.service_url,
+        'DEFAULT_HOST': Config.service_url,
+        'LETSENCRYPT_HOST': Config.service_url,
+        'LETSENCRYPT_EMAIL': Config.admin_email,
+        'WORDPRESS_DB_HOST': '_'.join(Config.service_name, "database"),
         'WORDPRESS_DB_USER_FILE': secretpath(
-            '.'.join(service_name, "MYSQL_USER")
+            '.'.join(Config.service_name, "MYSQL_USER")
         ),
         'WORDPRESS_DB_PASSWORD_FILE': secretpath(
-            '.'.join(service_name, "MYSQL_PASSWORD")
+            '.'.join(Config.service_name, "MYSQL_PASSWORD")
         )
     },
     secrets=[
-        Config.secrets.get_secret("{}.MYSQL_PASSWORD".format(service_name)),
-        Config.secrets.get_secret("{}.MYSQL_USER".format(service_name))
+        Config.secrets.get_secret("{}.MYSQL_PASSWORD".format(Config.service_name)),
+        Config.secrets.get_secret("{}.MYSQL_USER".format(Config.service_name))
     ],
     network=testnetwork.name,
     detach=True,

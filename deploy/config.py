@@ -53,9 +53,20 @@ class Config():
     DOCKER_API_VERSION = '1.30'
     RELATIVE_ROOT = parent_dir_of(__name__)
     DOCKER_CLIENT = get_docker_client(DOCKER_SOCKET_LOCATION, DOCKER_API_VERSION)
-    SECRETS = SecretStore(DOCKER_CLIENT)
+    SECRETS = SecretStore()
     available_subnets = ["172.{}.0.0/16".format(x) for x in range(30,255)]
     dictConfig(loggingConfig)
     logger = logging.getLogger()
     IMAGE_PULL_TIMEOUT = 300
     ADVERTISE_ADDR = "192.168.1.1:21257"
+    thisdir = os.path.dirname(os.path.realpath(__file__))
+    volumes_folder = getdir(thisdir, '..', "files", "DockerVolumes")
+    service_url = 'test.tams.tech'
+    service_name = 'test_wordpress'
+    admin_email = 'sysadmin@tams.tech'
+    images = {
+        'nginx_proxy_container': "jwilder/nginx-proxy",
+        'letsencrypt_companion': "jrcs/letsencrypt-nginx-proxy-companion",
+        'wordpress_blog': 'wordpress',
+        'wordpress_database': 'mariadb'
+    }

@@ -1,3 +1,6 @@
+import os
+from config import Config
+from random import getrandombits as random
 def msg(msg, *args):
     """Handle an assertion message without needing to write dedent/wrap every
     time.
@@ -35,8 +38,8 @@ def getdir(*args):
 
 def wipeclean():
     """Remove all current networks and containers."""
-    containers = lambda running=False: dc.containers.list(all=not running)
-    networks = dc.networks.list
+    containers = lambda running=False: Config.DOCKER_CLIENT.containers.list(all=not running)
+    networks = Config.DOCKER_CLIENT.networks.list
     for container in containers(running=True):
         container.stop()
     for container in containers():
@@ -54,7 +57,7 @@ def get_subnet():
     return IPAMConfig(pool_configs=[IPAMPool(subnet=Config.available_subnets.pop())])
 
 def pull(repository, tag=None):
-    for status in dc.api.pull(repository, tag=tag or 'latest', stream=True):
+    for status in Config.DOCKER_CLIENT.api.pull(repository, tag=tag or 'latest', stream=True):
         status = json.loads(status.decode())
         if 'progress' in status.keys():
             print(status['status'], status['progress'])
@@ -64,7 +67,7 @@ secretpath = lambda sn: os.path.join(os.sep, "var", "run", "secrets", sn)
 def check_images(images):
     for img in images.values():
         # check for images and pull if necessary.
-        if img not in dc.images.list(all=True):
+        if img not in Config.DOCKER_CLIENT.images.list(all=True):
             if ":" in img:
                 pull(
                     repository=img.split(':', maxsplit=1)[0],
@@ -76,10 +79,10 @@ def check_images(images):
 class SecretStore():
     """A place to store and retrieve docker secrets."""
     get_secret = lambda key: self.secrets[key]
-    def __init__(self, daemon):
+    def __init__(self):
         self.secrets = {}
-        self._get_secrets = daemon.secrets.list
-        self._create_secret = daemon.secrets.create
+        self._get_secrets = Config.DOCKER_CLIENT.secrets.list
+        self._create_secret = Config.DOCKER_CLIENT.secrets.create
     def create_secret(self, key: str, value: str):
         """Store a key-value pair as a docker secret."""
         for secret in self._get_secrets():
@@ -108,7 +111,7 @@ def _num_to_alpha(num, randval=False):
     If 'random' is True, num isn't the literal number to be converted, it's how
     many bits of entropy to gather for a random value."""
     if randval:
-        return baseN(random.getrandbits(num), 36)
+        return baseN(random(num), 36)
     else:
         return baseN(num, 36)
 
