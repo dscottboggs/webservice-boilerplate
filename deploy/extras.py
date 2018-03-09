@@ -54,7 +54,7 @@ def wipeclean():
             print(container, "is running still.")
         exit(1)
     for network in networks():
-        if network.name not in ('bridge', 'host', 'none'):
+        if network.name not in ('bridge', 'host', 'none', 'docker_gwbridge'):
             network.remove()
 
 def get_subnet():
