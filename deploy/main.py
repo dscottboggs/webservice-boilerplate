@@ -12,9 +12,9 @@ args = parseargs(argv)
 if not args['no_remove'] and not args['stop']:
     wipeclean()
 
-testnetwork = dc.networks.create(
-    name="TestNetwork",
-    driver="bridge",
+rev_prox_managed_net = dc.networks.create(
+    name="rev_prox_managed_net",
+    driver="overlay",
     ipam=get_subnet()
 )
 
@@ -45,7 +45,7 @@ nginx_proxy_container = dc.services.create(
             source=getdir(Config.volumes_folder, "nginx-proxy", "webroot")
         )
     ],
-    network=testnetwork.name,
+    networks=[rev_prox_managed_net.id],
     ports={
         80:  80,
         443: 443
@@ -56,7 +56,7 @@ letsencrypt_companion = dc.services.create(
     name="letsencrypt-companion",
     image=Config.images['letsencrypt_companion'],
     volumes_from=nginx_proxy_container.id,
-    network=testnetwork.name,
+    networks=[rev_prox_managed_net.id],
     mounts=[
         Mount(
             type='bind',
@@ -78,7 +78,7 @@ for name, secret in {
 wordpress_database = dc.containers.create(
     name='_'.join(Config.service_name, "database"),
     image=Config.images['wordpress_database'],
-    network=testnetwork.name,
+    network=[rev_prox_managed_net.id],
     environment={
         "MYSQL_USER_FILE": secretpath('.'.join(Config.service_name, "MYSQL_USER")),
         "MYSQL_RANDOM_ROOT_PASSWORD": True,
@@ -134,7 +134,7 @@ wordpress_blog = dc.containers.create(
         Config.secrets.get_secret("{}.MYSQL_PASSWORD".format(Config.service_name)),
         Config.secrets.get_secret("{}.MYSQL_USER".format(Config.service_name))
     ],
-    network=testnetwork.name,
+    network=[rev_prox_managed_net.id],
     detach=True,
 )
 
