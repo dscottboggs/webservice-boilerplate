@@ -20,9 +20,7 @@ testnetwork = dc.networks.create(
 
 check_images(Config.images)
 
-if not dc.swarm.init(advertise_addr=Config.ADVERTISE_ADDR):
-    print(msg("Swarm init failed!"))
-    exit(2)
+dc.swarm.init(advertise_addr=Config.ADVERTISE_ADDR)
 
 # ^^ filepath of a working directory
 nginx_proxy_container = dc.services.create(
