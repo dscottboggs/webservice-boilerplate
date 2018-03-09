@@ -1,8 +1,6 @@
 from deploy.config import Config
-from docker.types import IPAMConfig, IPAMPool, Mount
+from docker.types import Mount
 import docker
-import json
-import os
 from sys import argv
 from extras import *
 
@@ -20,7 +18,7 @@ testnetwork = dc.networks.create(
     ipam=get_subnet()
 )
 
-check_images(images)
+check_images(Config.images)
 
 if not dc.swarm.init(advertise_addr=Config.ADVERTISE_ADDR):
     msg("Swarm init failed!")
@@ -30,7 +28,7 @@ if not dc.swarm.init(advertise_addr=Config.ADVERTISE_ADDR):
 nginx_proxy_container = dc.services.create(
 # see help(dc.containers.run), create()'s documentation refers to it
     name="nginx-proxy-container",
-    image=images['nginx_proxy_container'],
+    image=Config.images['nginx_proxy_container'],
     mounts=[
         Mount(
             type='bind',
@@ -58,7 +56,7 @@ nginx_proxy_container = dc.services.create(
 )
 letsencrypt_companion = dc.services.create(
     name="letsencrypt-companion",
-    image=images['letsencrypt_companion'],
+    image=Config.images['letsencrypt_companion'],
     volumes_from=nginx_proxy_container.id,
     network=testnetwork.name,
     mounts=[
@@ -81,7 +79,7 @@ for name, secret in {
 
 wordpress_database = dc.containers.create(
     name='_'.join(Config.service_name, "database"),
-    image=images['wordpress_database'],
+    image=Config.images['wordpress_database'],
     network=testnetwork.name,
     environment={
         "MYSQL_USER_FILE": secretpath('.'.join(Config.service_name, "MYSQL_USER")),
@@ -106,7 +104,7 @@ wordpress_database = dc.containers.create(
 )
 wordpress_blog = dc.containers.create(
     name=Config.service_name,
-    image=images['wordpress_blog'],
+    image=Config.images['wordpress_blog'],
     mounts=[
         Mount(
             type='bind',
