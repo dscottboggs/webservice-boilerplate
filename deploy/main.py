@@ -1,4 +1,4 @@
-from config import Config
+from deploy.config import Config
 from docker.types import IPAMConfig, IPAMPool, Mount
 import docker
 import json
