@@ -48,10 +48,10 @@ loggingConfig = get_logging_config() or {
 class SecretStore():
     """A place to store and retrieve docker secrets."""
     get_secret = lambda key: self.secrets[key]
-    def __init__(self):
+    def __init__(self, daemon):
         self.secrets = {}
-        self._get_secrets = Config.DOCKER_CLIENT.secrets.list
-        self._create_secret = Config.DOCKER_CLIENT.secrets.create
+        self._get_secrets = daemon.secrets.list
+        self._create_secret = daemon.secrets.create
     def create_secret(self, key: str, value: str):
         """Store a key-value pair as a docker secret."""
         for secret in self._get_secrets():
@@ -72,7 +72,7 @@ class Config():
     DOCKER_API_VERSION = '1.30'
     RELATIVE_ROOT = parent_dir_of(__name__)
     DOCKER_CLIENT = get_docker_client(DOCKER_SOCKET_LOCATION, DOCKER_API_VERSION)
-    SECRETS = SecretStore()
+    SECRETS = SecretStore(DOCKER_CLIENT)
     available_subnets = ["172.{}.0.0/16".format(x) for x in range(30,255)]
     dictConfig(loggingConfig)
     logger = logging.getLogger()
