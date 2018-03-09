@@ -106,7 +106,7 @@ wordpress_database = dc.containers.create(
     secrets=[
         Config.secrets.get_secret('.'.join(service_name, "MYSQL_PASSWORD")),
         Config.secrets.get_secret('.'.join(service_name, "MYSQL_USER")),
-    ]
+    ],
     mounts=[
         Mount(
             type='bind',
@@ -114,7 +114,7 @@ wordpress_database = dc.containers.create(
             source=getdir(web_service_root, "service", "database"),
             read_only=True
         )
-    ]
+    ],
     detach=True
 )
 wordpress_blog = dc.containers.create(
@@ -150,7 +150,7 @@ wordpress_blog = dc.containers.create(
     secrets=[
         Config.secrets.get_secret("{}.MYSQL_PASSWORD".format(service_name))
         Config.secrets.get_secret("{}.MYSQL_USER".format(service_name))
-    ]
+    ],
     network=testnetwork.name,
     detach=True,
 )
