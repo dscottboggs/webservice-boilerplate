@@ -148,7 +148,7 @@ wordpress_blog = dc.containers.create(
         )
     },
     secrets=[
-        Config.secrets.get_secret("{}.MYSQL_PASSWORD".format(service_name))
+        Config.secrets.get_secret("{}.MYSQL_PASSWORD".format(service_name)),
         Config.secrets.get_secret("{}.MYSQL_USER".format(service_name))
     ],
     network=testnetwork.name,
