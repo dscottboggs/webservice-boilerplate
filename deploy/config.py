@@ -58,3 +58,4 @@ class Config():
     dictConfig(loggingConfig)
     logger = logging.getLogger()
     IMAGE_PULL_TIMEOUT = 300
+    ADVERTISE_ADDR = "192.168.1.1:21257"

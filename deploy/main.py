@@ -34,6 +34,10 @@ testnetwork = dc.networks.create(
 
 check_images(images)
 
+if not dc.swarm.init(advertise_addr=Config.ADVERTISE_ADDR):
+    msg("Swarm init failed!")
+    exit(2)
+
 web_service_root = getdir(project_root, "files", "DockerVolumes")
 # ^^ filepath of a working directory
 nginx_proxy_container = dc.services.create(
