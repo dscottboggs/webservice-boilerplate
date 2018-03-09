@@ -10,6 +10,7 @@ default_networks = ('bridge', 'host', 'none')
 Mount = docker.types.Mount
 project_root = os.path.join(thisdir, '..')
 service_url = 'test.tams.tech'
+service_name = 'test_wordpress'
 admin_email = 'sysadmin@tams.tech'
 images = {
     'nginx_proxy_container': "jwilder/nginx-proxy",
@@ -17,6 +18,7 @@ images = {
     'wordpress_blog': 'wordpress',
     'wordpress_database': 'mariadb'
 }
+WORDPRESS_DATABASE_PASSWORD = Config.num_to_alpha(200, randval=True)
 
 args = {
     'stop': "stop" in argv or "--stop" in argv,
@@ -130,14 +132,27 @@ letsencrypt_companion = dc.services.create(
     ],
     detach=True
 )
-wordpress_database = dc.services.create(
-    name="wordpress_database",
+wordpress_database = dc.containers.create(
+    name="{}_database".format(service_name),
     image=images['wordpress_database'],
     network=testnetwork.name,
+    environment={
+        "MYSQL_USER": service_name,
+        "MYSQL_RANDOM_ROOT_PASSWORD": True,
+        "MYSQL_PASSWORD": WORDPRESS_DATABASE_PASSWORD,
+    },
+    mounts=[
+        Mount(
+            type='bind',
+            target='/var/lib/mysql',
+            source=getdir(web_service_root, "service", "database"),
+            read_only=True
+        )
+    ]
     detach=True
 )
-wordpress_blog = dc.services.create(
-    name="test-webserver",
+wordpress_blog = dc.containers.create(
+    name=service_name,
     image=images['wordpress_blog'],
     mounts=[
         Mount(
@@ -157,7 +172,10 @@ wordpress_blog = dc.services.create(
         'VIRTUAL_HOST': service_url,
         'DEFAULT_HOST': service_url,
         'LETSENCRYPT_HOST': service_url,
-        'LETSENCRYPT_EMAIL': admin_email
+        'LETSENCRYPT_EMAIL': admin_email,
+        'WORDPRESS_DB_HOST': "{}_url".format(service_name),
+        'WORDPRESS_DB_USER': service_name,
+        'WORDPRESS_DB_PASSWORD': WORDPRESS_DATABASE_PASSWORD
     },
     network=testnetwork.name,
     detach=True,
