@@ -155,7 +155,7 @@ web_service = dc.containers.create(
 
 containers = {
     container.name:container for container in (
-        nginx_proxy_container, letsencrypt_companion, web_service
+        traefik_container, web_service
     )
 }
 print(
