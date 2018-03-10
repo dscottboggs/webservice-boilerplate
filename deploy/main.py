@@ -4,11 +4,14 @@ import docker
 import json
 import os
 from sys import argv
+from stat import S_IRUSR as OWNER_READ
+from stat import S_IWUSR as OWNER_WRITE
 thisdir = os.path.dirname(os.path.realpath(__file__))
 dc = Config.DOCKER_CLIENT
 default_networks = ('bridge', 'host', 'none')
 Mount = docker.types.Mount
-project_root = os.path.join(thisdir, '..')
+project_root = '/'.join(thisdir.split('/')[:-1]) # parent dir of the current dir
+print("Project root is: ", project_root)
 service_url = 'test.tams.tech'
 admin_email = 'sysadmin@tams.tech'
 images = {
@@ -68,7 +71,8 @@ if not args['no_remove'] and not args['stop']:
 traefik_storefile = os.path.join(project_root, "files", "traefik", "letsencrypt_store.json")
 if not os.access(traefik_storefile, os.F_OK):
     open(traefik_storefile, 'w').close()
-    os.chmod(traefik_storefile, mode=644)
+    os.chmod(traefik_storefile, mode=OWNER_READ|OWNER_WRITE)
+    os.chown(traefik_storefile, uid=0, gid=0)
 del traefik_storefile
 
 testnetwork = dc.networks.create(
