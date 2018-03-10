@@ -12,9 +12,8 @@ project_root = os.path.join(thisdir, '..')
 service_url = 'test.tams.tech'
 admin_email = 'sysadmin@tams.tech'
 images = {
-    'nginx_proxy_container': "jwilder/nginx-proxy:latest",
-    'letsencrypt_companion': "jrcs/letsencrypt-nginx-proxy-companion",
-    'service': 'nginx:latest'
+    'traefik': "traefik:1.3.6-alpine",
+    'service': 'nginx'
 }
 
 args = {
@@ -66,6 +65,12 @@ def pull(repository, tag=None):
 if not args['no_remove'] and not args['stop']:
     wipeclean()
 
+traefik_storefile = os.path.join(project_root, "files", "traefik", "letsencrypt_store.json")
+if not os.access(traefik_storefile, os.F_OK):
+    open(traefik_storefile, 'r').close()
+    os.chmod(traefik_storefile, mode='0644')
+del traefik_storefile
+
 testnetwork = dc.networks.create(
     name="TestNetwork",
     driver="bridge",
@@ -85,49 +90,35 @@ for img in images.values():
 
 web_service_root = getdir(project_root, "files", "DockerVolumes")
 # ^^ filepath of a working directory
-nginx_proxy_container = dc.containers.create(
-# see help(dc.containers.run), create()'s documentation refers to it
-    name="nginx-proxy-container",
-    image=images['nginx_proxy_container'],
+traefik_container = dc.containers.create(
+    name="traefik",
+    image=images["traefik"],
+    network=testnetwork.id,
     mounts=[
         Mount(
             type='bind',
-            target="/tmp/docker.sock",
-            source=Config.DOCKER_SOCKET_FILE_LOCATION,
+            target='/traefik.toml'
+            source=os.path.join(
+                project_root, "files", "traefik", "traefik.toml"
+            )
             read_only=True
         ),
         Mount(
             type='bind',
-            target="/etc/nginx",
-            source=getdir(web_service_root, "nginx-proxy", "conf")
-        ),
-        Mount(
-            type='bind',
-            target="/usr/share/nginx/html",
-            source=getdir(web_service_root, "nginx-proxy", "webroot")
+            target='/acme.json',
+            source=os.path.join(
+                project_root, "files", "traefik", "letsencrypt_store.toml"
+            )
         )
     ],
-    network=testnetwork.name,
-    ports={
-        80:  80,
-        443: 443
-    },
-    detach=True
-)
-letsencrypt_companion = dc.containers.create(
-    name="letsencrypt-companion",
-    image=images['letsencrypt_companion'],
-    volumes_from=nginx_proxy_container.id,
-    network=testnetwork.name,
-    mounts=[
-        Mount(
-            type='bind',
-            target="/var/run/docker.sock",
-            source=Config.DOCKER_SOCKET_FILE_LOCATION,
-            read_only=True
-        )
+    ports=[
+        "80:80",
+        "443:443"
     ],
-    detach=True
+    labels={
+        'traefik.frontend.rule': "Host:monitor.tams.tech",
+        'traefik.port': 8080
+    }
 )
 web_service = dc.containers.create(
     name="test-webserver",
