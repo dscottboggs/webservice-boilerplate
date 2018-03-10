@@ -6,6 +6,7 @@ import os
 from sys import argv
 from stat import S_IRUSR as OWNER_READ
 from stat import S_IWUSR as OWNER_WRITE
+from subprocess import run
 thisdir = os.path.dirname(os.path.realpath(__file__))
 dc = Config.DOCKER_CLIENT
 default_networks = ('bridge', 'host', 'none', 'docker_gwbridge', "ingress")
@@ -18,6 +19,8 @@ images = {
     'traefik': "traefik:1.3.6-alpine",
     'service': 'nginx'
 }
+
+sh_exec = lambda cmd: run(cmd, shell=True, check=True)
 
 args = {
     'stop': "stop" in argv,
@@ -78,7 +81,7 @@ traefik_storefile = os.path.join(
 if not os.access(traefik_storefile, os.F_OK):
     open(traefik_storefile, 'w').close()
     os.chmod(traefik_storefile, mode=OWNER_READ|OWNER_WRITE)
-    os.chown(traefik_storefile, uid=0, gid=0)
+    sh_exec(['sudo', 'chown', 'root:root', traefik_storefile])
 del traefik_storefile
 
 testnetwork = dc.networks.create(
