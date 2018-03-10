@@ -1,13 +1,5 @@
 defaultEntryPoints = [ "http", "https"]
 
-[traefikLog]
-  filePath = "/etc/traefik.log"
-  format   = "json"
-
-[accessLog]
-  filePath = "/etc/traefik_access.log"
-  format   = "json"
-
 [web]
 address = ":8080"
   [web.auth.basic]

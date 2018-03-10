@@ -82,8 +82,9 @@ traefik_files = {
 for filename in traefik_files.values():
     if not os.access(filename, os.F_OK):
         open(filename, 'w').close()
-os.chmod(traefik_files['encryptionStore'], mode=OWNER_READ|OWNER_WRITE)
-sh_exec('sudo chown root:root {}'.format(traefik_files['encryptionStore']))
+if not os.access(traefik_files['encryptionStore'], os.F_OK):
+    os.chmod(traefik_files['encryptionStore'], mode=OWNER_READ|OWNER_WRITE)
+    sh_exec('sudo chown root:root {}'.format(traefik_files['encryptionStore']))
 
 testnetwork = dc.networks.create(
     name="TestNetwork",
