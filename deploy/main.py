@@ -97,10 +97,10 @@ traefik_container = dc.containers.create(
     mounts=[
         Mount(
             type='bind',
-            target='/traefik.toml'
+            target='/traefik.toml',
             source=os.path.join(
                 project_root, "files", "traefik", "traefik.toml"
-            )
+            ),
             read_only=True
         ),
         Mount(
