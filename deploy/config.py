@@ -87,4 +87,4 @@ class Config():
     dictConfig(loggingConfig)
     logger = logging.getLogger()
     IMAGE_PULL_TIMEOUT = 300
-    traefik_command = "--docker"
+    traefik_command = "--configfile /etc/traefik.toml"
