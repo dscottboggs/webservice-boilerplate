@@ -107,6 +107,7 @@ traefik_container = dc.containers.create(
     name="traefik",
     image=images["traefik"],
     network=testnetwork.id,
+    command=Config.traefik_command
     mounts=[
         Mount(
             type='bind',
