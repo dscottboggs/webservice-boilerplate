@@ -71,18 +71,17 @@ def pull(repository, tag=None):
 if not args['no_remove'] and not args['stop']:
     wipeclean()
 
-traefik_storefile = os.path.join(
-    project_root,
-    "files",
-    "traefik",
-    "etc",
-    "letsencrypt_store.json"
-)
-if not os.access(traefik_storefile, os.F_OK):
-    open(traefik_storefile, 'w').close()
-    os.chmod(traefik_storefile, mode=OWNER_READ|OWNER_WRITE)
-    sh_exec(['sudo', 'chown', 'root:root', traefik_storefile])
-del traefik_storefile
+traefik_folder = os.path.join(project_root, "files", "traefik", "etc")
+traefik_files = {
+    'encryptionStore': os.path.join(traefik_folder,"letsencrypt_store.json"),
+    'traefikLog': os.path.join(traefik_folder, "traefik.log"),
+    'accessLog': os.path.join(traefik_folder, "traefik_access.log")
+}
+for filename in traefik_files.values():
+    if not os.access(filename, os.F_OK):
+        open(filename, 'w').close()
+os.chmod(traefik_files['encryptionStore'], mode=OWNER_READ|OWNER_WRITE)
+sh_exec(['sudo', 'chown', 'root:root', traefik_files['encryptionStore']])
 
 testnetwork = dc.networks.create(
     name="TestNetwork",
