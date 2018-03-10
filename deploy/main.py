@@ -104,18 +104,23 @@ for img in images.values():
 web_service_root = getdir(project_root, "files", "DockerVolumes")
 # ^^ filepath of a working directory
 traefik_container = dc.containers.create(
-    name="traefik",
+    name="traefik-proxy",
     image=images["traefik"],
     network=testnetwork.id,
-    command=Config.traefik_command
+    command=Config.traefik_command,
     mounts=[
+        Mount(
+            type='bind',
+            target="/var/run/docker.sock",
+            source=Config.DOCKER_SOCKET_FILE_LOCATION,
+            read_only=True
+        ),
         Mount(
             type='bind',
             target='/etc',
             source=os.path.join(
                 project_root, "files", "traefik", "etc"
-            ),
-            read_only=True
+            )
         ),
     ],
     ports={
