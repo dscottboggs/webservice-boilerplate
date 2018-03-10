@@ -68,7 +68,7 @@ if not args['no_remove'] and not args['stop']:
 traefik_storefile = os.path.join(project_root, "files", "traefik", "letsencrypt_store.json")
 if not os.access(traefik_storefile, os.F_OK):
     open(traefik_storefile, 'w').close()
-    os.chmod(traefik_storefile, mode='0644')
+    os.chmod(traefik_storefile, mode=644)
 del traefik_storefile
 
 testnetwork = dc.networks.create(
