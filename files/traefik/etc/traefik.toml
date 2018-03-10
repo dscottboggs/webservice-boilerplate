@@ -1,11 +1,11 @@
 defaultEntryPoints = [ "http", "https"]
 
 [traefikLog]
-  filePath = "./traefik.log"
+  filePath = "/etc/traefik.log"
   format   = "json"
 
 [accessLog]
-  filePath = "./traefik_access.log"
+  filePath = "/etc/traefik_access.log"
   format   = "json"
 
 [web]
@@ -26,6 +26,6 @@ address = ":8080"
 [acme] # LetsEncrypt config
   email      = "sysadmin@tams.tech"
   entryPoint = "https"
-  storage    = "letsencrypt_store.json"
+  storage    = "/etc/letsencrypt_store.json"
   onHostRule = true
   onDemand   = false
