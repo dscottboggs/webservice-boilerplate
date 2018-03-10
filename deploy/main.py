@@ -117,7 +117,7 @@ traefik_container = dc.containers.create(
     },
     labels={
         'traefik.frontend.rule': "Host:monitor.tams.tech",
-        'traefik.port': 8080
+        'traefik.port': '8080'
     }
 )
 web_service = dc.containers.create(
