@@ -6,7 +6,7 @@ import os
 from sys import argv
 from stat import S_IRUSR as OWNER_READ
 from stat import S_IWUSR as OWNER_WRITE
-from subprocess import run
+from subprocess import run, PIPE
 thisdir = os.path.dirname(os.path.realpath(__file__))
 dc = Config.DOCKER_CLIENT
 default_networks = ('bridge', 'host', 'none', 'docker_gwbridge', "ingress")
@@ -20,7 +20,9 @@ images = {
     'service': 'nginx'
 }
 
-sh_exec = lambda cmd: run(cmd, shell=True, check=True)
+sh_exec = lambda cmd: run(
+    cmd, shell=True, check=True, stdin=PIPE, stdout=PIPE, stderr=PIPE
+)
 
 args = {
     'stop': "stop" in argv,
