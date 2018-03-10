@@ -8,7 +8,7 @@ from stat import S_IRUSR as OWNER_READ
 from stat import S_IWUSR as OWNER_WRITE
 thisdir = os.path.dirname(os.path.realpath(__file__))
 dc = Config.DOCKER_CLIENT
-default_networks = ('bridge', 'host', 'none')
+default_networks = ('bridge', 'host', 'none', 'docker_gwbridge', "ingress")
 Mount = docker.types.Mount
 project_root = '/'.join(thisdir.split('/')[:-1]) # parent dir of the current dir
 print("Project root is: ", project_root)
@@ -68,7 +68,13 @@ def pull(repository, tag=None):
 if not args['no_remove'] and not args['stop']:
     wipeclean()
 
-traefik_storefile = os.path.join(project_root, "files", "traefik", "letsencrypt_store.json")
+traefik_storefile = os.path.join(
+    project_root,
+    "files",
+    "traefik",
+    "etc",
+    "letsencrypt_store.json"
+)
 if not os.access(traefik_storefile, os.F_OK):
     open(traefik_storefile, 'w').close()
     os.chmod(traefik_storefile, mode=OWNER_READ|OWNER_WRITE)
@@ -101,19 +107,12 @@ traefik_container = dc.containers.create(
     mounts=[
         Mount(
             type='bind',
-            target='/traefik.toml',
+            target='/etc',
             source=os.path.join(
-                project_root, "files", "traefik", "traefik.toml"
+                project_root, "files", "traefik", "etc"
             ),
             read_only=True
         ),
-        Mount(
-            type='bind',
-            target='/acme.json',
-            source=os.path.join(
-                project_root, "files", "traefik", "letsencrypt_store.toml"
-            )
-        )
     ],
     ports={
         80: 80,
