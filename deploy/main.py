@@ -111,10 +111,10 @@ traefik_container = dc.containers.create(
             )
         )
     ],
-    ports=[
-        "80:80",
-        "443:443"
-    ],
+    ports={
+        80: 80,
+        443:443
+    },
     labels={
         'traefik.frontend.rule': "Host:monitor.tams.tech",
         'traefik.port': 8080
