@@ -151,11 +151,11 @@ web_service = dc.containers.create(
             read_only=True,
         )
     ],
-    environment={
-        'VIRTUAL_HOST': service_url,
-        'DEFAULT_HOST': service_url,
-        'LETSENCRYPT_HOST': service_url,
-        'LETSENCRYPT_EMAIL': admin_email
+    labels={
+        "traefik.backend":          "test",
+        "traefik.frontend.rule":    "Host:test.tams.tech",
+        "traefik.docker.network":   "proxy",
+        "traefik.port":             "80"
     },
     network=testnetwork.name,
     detach=True,
