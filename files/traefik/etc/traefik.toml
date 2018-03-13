@@ -21,3 +21,5 @@ address = ":8080"
   storage    = "/etc/letsencrypt_store.json"
   onHostRule = true
   onDemand   = false
+  [acme.httpChallenge]
+    entryPoint = "http"
